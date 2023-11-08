@@ -10,6 +10,7 @@ public class AccountHandler {
              counter = counter + 1;
         }
         insert addAccounts;
+        System.debug('testing');
     }
 
 }
