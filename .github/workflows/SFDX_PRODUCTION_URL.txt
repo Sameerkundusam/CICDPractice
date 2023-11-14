@@ -1,0 +1,1 @@
+sfdx force:auth:jwt:grant --clientid=3MVG9fe4g9fhX0E654644H0VxN0S.qNCwtyi_kmaRSz1xLTRTUFNUIw.DphoMVEOd.NXCcHborN0fMG8STtle --jwtkeyfile=C:\Users\SameerKundu\Downloads\code.key --username=sameer.kundu@techshiney.com --setdefaultdevhubusername --setalias devjwt

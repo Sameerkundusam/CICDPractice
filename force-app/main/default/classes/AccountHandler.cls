@@ -8,6 +8,7 @@ public class AccountHandler {
             accounts.AccountNumber = 'A000'+counter;
             addAccounts.add(accounts);
              counter = counter + 1;
+             
         }
         insert addAccounts;
         System.debug('testing');
