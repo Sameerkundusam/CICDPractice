@@ -5,6 +5,7 @@ public class AccountAddressTriggerHandler {
                 if(alist.Match_Billing_Address__c == true){
                     alist.ShippingPostalCode = alist.BillingPostalCode;
                     System.debug('test');
+                    
                 }
             }
         }
