@@ -1,0 +1,53 @@
+name: Deploy main branch to Main
+ 
+# Definition when the workflow should run
+on:
+    push:
+      branches: [ main ]
+      paths:
+        - 'force-app/**'
+
+ 
+# Jobs to be executed
+jobs:
+    deploy-main-to-production:
+        runs-on: ubuntu-latest
+        if: ${{ github.actor != 'dependabot[bot]' }}
+        steps:
+ 
+            # Checkout the source code
+            - name: 'Checkout source code'
+              uses: actions/checkout@v3
+              with:
+                fetch-depth: 0
+ 
+            # Install Salesforce CLI
+            - name: 'Install Salesforce CLI'
+              run:  npm install sfdx-cli -g
+ 
+            # install SFDX-Git-Delta plugin - https://github.com/scolladon/sfdx-git-delta
+            - name: 'Installing sfdx git delta'
+              run: | 
+                  echo y | sfdx plugins:install sfdx-git-delta
+                  sfdx plugins
+ 
+            #Create Delta Package
+            - name: 'Create delta packages for new, modified or deleted metadata'
+              run: | 
+                  mkdir changed-sources
+                  sfdx sgd:source:delta --to "HEAD" --from "HEAD^" --output changed-sources/ --generate-delta --source force-app/
+ 
+            #Store server.key file for JWT Auth
+            - name: 'Get JWT Key and store in server.key'
+              run: echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY }}" > server.key
+ 
+            # Authenticate to org
+            - name: 'Authenticate to Merge Org'
+              run: sfdx force:auth:jwt:grant --clientid=${{ secrets.SALESFORCE_CONSUMER_KEY }} --jwtkeyfile=server.key --username=${{ secrets.SALESFORCE_DEVHUB_USERNAME }} --setdefaultdevhubusername
+ 
+            - name: 'Deploy the entire branch to Merge org'
+              #run: sfdx force:source:deploy -p force-app --testlevel RunLocalTests --json -u ${{ secrets.SALESFORCE_DEVHUB_USERNAME }}
+              run: sfdx force:source:deploy -p force-app --testlevel NoTestRun --json -u ${{ secrets.SALESFORCE_DEVHUB_USERNAME }}
+ 
+            #- name: 'Deploy destructive changes (if any) to Merge org'
+            #  run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings
