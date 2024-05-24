@@ -1,4 +1,5 @@
 public class AccountCalculator {
+//testing
     @future
     public static void countContact(List<Id> accIds){
         List<Account> accList = [Select Id,(SELECT Id from Contacts) From Account WHERE Id IN: accIds];
