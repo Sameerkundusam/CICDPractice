@@ -1,5 +1,5 @@
 public class AccountAddressTriggerHandler {
-    //test Sameer Kundu
+    //test S
     public static void beforeinsertrecords(list<Account>acclist){
         if(!acclist.isEmpty()){
             for(Account alist:acclist){
