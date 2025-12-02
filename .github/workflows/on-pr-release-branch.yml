@@ -10,50 +10,42 @@ on:
 jobs:
   validate-pr-in-merge-sandbox:
     runs-on: ubuntu-latest
-    if: ${{ github.actor != 'dependabot[bot]' }}
+    environment: sffnoobs
     steps:
 
-      # 1. Checkout repo
-      - name: Checkout source code
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
-      # 2. Install Node 18 so sfdx-git-delta works
       - name: Setup Node 18
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      # 3. Install Salesforce CLI (sfdx)
-      - name: Install Salesforce CLI
-        run: |
-          npm install -g sfdx-cli
-          sfdx --version
+      - name: Checkout source code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
 
-      # 4. Install sfdx-git-delta plugin
-      - name: Install sfdx-git-delta
+      - name: Install Salesforce CLI (sfdx)
+        run: npm install @salesforce/cli --global
+
+      - name: Install sfdx-git-delta plugin
         run: |
-          echo y | sfdx plugins:install sfdx-git-delta
+          echo Y | sfdx plugins:install sfdx-git-delta
           sfdx plugins
 
-      # 5. Generate delta folder
       - name: Create delta packages
         run: |
-          mkdir -p changed-sources
-          sfdx sgd:source:delta \
+          mkdir changed-sources
+          sf sgd source delta \
             --to "HEAD" \
-            --from "HEAD^" \
+            --from "HEAD~1" \
             --output changed-sources/ \
             --generate-delta \
             --source force-app/
+          echo "[INFO] Diff generated"
 
-      # 6. Store the private key
-      - name: Store JWT key
+      - name: Get JWT Key and store in server.key
         run: echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY }}" > server.key
 
-      # 7. Authenticate via JWT
-      - name: Authenticate to Salesforce
+      - name: Authenticate to Production Org
         run: |
           sfdx force:auth:jwt:grant \
             --clientid ${{ secrets.SALESFORCE_CONSUMER_KEY }} \
@@ -61,7 +53,6 @@ jobs:
             --username ${{ secrets.SALESFORCE_DEVHUB_USERNAME }} \
             --setdefaultdevhubusername
 
-      # 8. Validate deployment (check-only)
       - name: Validate Pull Request in Merge Sandbox
         run: |
           sfdx force:source:deploy \
