@@ -55,9 +55,9 @@ jobs:
 
       - name: Validate Pull Request in Merge Sandbox
         run: |
-          sfdx force:source:deploy \
-            -c \
-            -p force-app \
-            --testlevel RunLocalTests \
-            --json \
-            -u ${{ secrets.SALESFORCE_DEVHUB_USERNAME }}
+          sf deploy metadata \
+            --source-dir force-app \
+            --test-level RunLocalTests \
+            --dry-run \
+            --target-org ${{ secrets.SALESFORCE_DEVHUB_USERNAME }}
+
