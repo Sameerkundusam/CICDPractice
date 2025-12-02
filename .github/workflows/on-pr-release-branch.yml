@@ -42,22 +42,9 @@ jobs:
             --source force-app/
           echo "[INFO] Diff generated"
 
-      - name: Get JWT Key and store in server.key
-        run: echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY }}" > server.key
-
-      - name: Authenticate to Production Org
+      - name: 'Deploy to environment with running all local tests'
         run: |
-          sfdx force:auth:jwt:grant \
-            --clientid ${{ secrets.SALESFORCE_CONSUMER_KEY }} \
-            --jwtkeyfile server.key \
-            --username ${{ secrets.SALESFORCE_DEVHUB_USERNAME }} \
-            --setdefaultdevhubusername
-
-      - name: Validate Pull Request in Merge Sandbox
-        run: |
-          sf deploy metadata \
-            --source-dir force-app \
-            --test-level RunLocalTests \
-            --dry-run \
-            --target-org ${{ secrets.SALESFORCE_DEVHUB_USERNAME }}
+          echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY }}" > server.key
+          sf org login jwt --username ${{ secrets.SALESFORCE_DEVHUB_USERNAME }} --jwt-key-file server.key --client-id ${{ secrets.SALESFORCE_CONSUMER_KEY }} --instance-url ${{ vars.INSTANCE_URL }} --set-default
+          sf project deploy start --source-dir changed-sources/force-app --test-level RunLocalTests
 
