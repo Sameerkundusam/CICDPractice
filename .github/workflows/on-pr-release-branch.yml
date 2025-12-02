@@ -49,8 +49,7 @@ jobs:
  
             #Store server.key file for JWT Auth
             - name: 'Get JWT Key and store in server.key'
-              run: echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY
- }}" > server.key
+              run: echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY }}" > server.key
  
             # Authenticate to org
             - name: 'Authenticate to Production Org'
