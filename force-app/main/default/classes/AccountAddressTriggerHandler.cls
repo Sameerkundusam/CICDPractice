@@ -1,7 +1,7 @@
 public class AccountAddressTriggerHandler {
     //class test
 
-    //test Sameer
+    //test Sameer cicd
     public static void beforeinsertrecords(list<Account>acclist){
         if(!acclist.isEmpty()){
             for(Account alist:acclist){
