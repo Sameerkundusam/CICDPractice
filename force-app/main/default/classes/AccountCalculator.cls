@@ -11,6 +11,7 @@ public class AccountCalculator {
         if(!accList.isEmpty()){
             update accList ;
         }
+        system.debug('size of account update ');
     }
 
 }
