@@ -1,26 +1,16 @@
-name: Validate Pull Request in Merge Sandbox
+name: Deploy main branch to Main
  
 # Definition when the workflow should run
 on:
-  # The workflow will run whenever an event happens on a pull request
-  pull_request:
-    # The events are that a PR is opened, or when a commit is pushed
-    # to a branch that has an existing pull request
-    types: [opened, synchronize]
-    # The branches filter allows to specify that this workflow should only
-    # run if the branch name is "develop". This way we prevent this workflow
-    # from running when PRs are opened on other branches
-    branches: [ main ]
-    # We only care about changes to the force-app directory, which is the
-    # root directory of the sfdx project. This prevents the job from running
-    # when changing non-salesforce files (like this yml file).
-    paths:
-      - 'force-app/**'
+    push:
+      branches: [ main ]
+      paths:
+        - 'force-app/**'
 
  
 # Jobs to be executed
 jobs:
-    validate-pr-in-merge-sandbox:
+    deploy-main-to-production:
         runs-on: ubuntu-latest
         if: ${{ github.actor != 'dependabot[bot]' }}
         steps:
@@ -49,12 +39,15 @@ jobs:
  
             #Store server.key file for JWT Auth
             - name: 'Get JWT Key and store in server.key'
-              run: echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY
- }}" > server.key
+              run: echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY }}" > server.key
  
             # Authenticate to org
-            - name: 'Authenticate to Production Org'
+            - name: 'Authenticate to Merge Org'
               run: sfdx force:auth:jwt:grant --clientid=${{ secrets.SALESFORCE_CONSUMER_KEY }} --jwtkeyfile=server.key --username=${{ secrets.SALESFORCE_DEVHUB_USERNAME }} --setdefaultdevhubusername
  
-            - name: 'Validate Pull Request in Merge Sandbox'
-              run: sfdx force:source:deploy -c -p force-app --testlevel RunLocalTests --json -u ${{ secrets.SALESFORCE_DEVHUB_USERNAME }}
+            - name: 'Deploy the entire branch to Merge org'
+              #run: sfdx force:source:deploy -p force-app --testlevel RunLocalTests --json -u ${{ secrets.SALESFORCE_DEVHUB_USERNAME }}
+              run: sfdx force:source:deploy -p force-app --testlevel NoTestRun --json -u ${{ secrets.SALESFORCE_DEVHUB_USERNAME }}
+ 
+            #- name: 'Deploy destructive changes (if any) to Merge org'
+            #  run: sfdx force:mdapi:deploy -d "changed-sources/destructiveChanges" --checkonly --ignorewarnings
