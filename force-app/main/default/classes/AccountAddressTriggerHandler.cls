@@ -1,4 +1,6 @@
 public class AccountAddressTriggerHandler {
+    //class test
+
     //test Sameer
     public static void beforeinsertrecords(list<Account>acclist){
         if(!acclist.isEmpty()){
