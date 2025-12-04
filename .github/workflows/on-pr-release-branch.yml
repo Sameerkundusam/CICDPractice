@@ -84,9 +84,18 @@ jobs:
             exit 1
           fi
 
-          echo "[INFO] Running tests: $TESTS"
+          echo "[INFO] Found Test Classes: $TESTS"
+
+          # Convert comma-separated tests → individual --tests flags
+          TEST_ARGS=""
+          for T in $(echo "$TESTS" | tr ',' ' '); do
+            TEST_ARGS="$TEST_ARGS --tests $T"
+          done
+
+          echo "[INFO] Final Test Args: $TEST_ARGS"
 
           sf project deploy start \
             --source-dir changed-sources/force-app \
             --test-level RunSpecifiedTests \
-            --tests "$TESTS"
+            $TEST_ARGS
+
