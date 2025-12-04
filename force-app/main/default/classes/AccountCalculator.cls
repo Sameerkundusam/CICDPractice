@@ -1,4 +1,4 @@
-// TEST_CLASS: AccountCalculatorTest
+// TEST_CLASS: AccountCalculatorTest, AccountManagerTest
 public class AccountCalculator {
     @future
     public static void countContact(List<Id> accIds){
