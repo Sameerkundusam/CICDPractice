@@ -3,14 +3,14 @@ name: Validate Pull Request in Merge Sandbox
 on:
   pull_request:
     types: [opened, synchronize]
-    branches: [ release ]
+    branches: [release]
     paths:
       - 'force-app/**'
 
 jobs:
   validate-pr-in-merge-sandbox:
     runs-on: ubuntu-latest
-    environment: sffnoobs
+
     steps:
 
       - name: Setup Node 18
@@ -23,7 +23,7 @@ jobs:
         with:
           fetch-depth: 2
 
-      - name: Install Salesforce CLI (sfdx)
+      - name: Install Salesforce CLI
         run: npm install @salesforce/cli --global
 
       - name: Install sfdx-git-delta plugin
@@ -31,7 +31,7 @@ jobs:
           echo Y | sfdx plugins:install sfdx-git-delta
           sfdx plugins
 
-      - name: Create delta packages
+      - name: Create delta package
         run: |
           mkdir changed-sources
           sf sgd source delta \
@@ -40,11 +40,53 @@ jobs:
             --output changed-sources/ \
             --generate-delta \
             --source force-app/
-          echo "[INFO] Diff generated"
+          echo "[INFO] Delta package generated"
 
-      - name: 'Deploy to environment with running all local tests'
+      - name: Extract Test Class Names from Changed Apex Classes
+        id: extract-tests
+        run: |
+          TEST_CLASSES=""
+          echo "[INFO] Searching for modified Apex classes..."
+
+          # Loop through all changed Apex classes
+          for file in $(git diff --name-only HEAD~1 HEAD | grep ".cls$"); do
+            echo "[INFO] Checking: $file"
+            
+            # Extract test class from comment pattern: // TEST_CLASS: MyTestClassName
+            CLASS_NAME=$(grep -oP "(?<=TEST_CLASS:\s).*" "$file" || true)
+
+            if [[ ! -z "$CLASS_NAME" ]]; then
+              echo "[INFO] Found Test class: $CLASS_NAME"
+              TEST_CLASSES="$TEST_CLASSES,$CLASS_NAME"
+            fi
+          done
+
+          TEST_CLASSES=${TEST_CLASSES#,}   # remove leading comma
+          echo "tests=$TEST_CLASSES" >> $GITHUB_OUTPUT
+          echo "[INFO] Final Test Classes: $TEST_CLASSES"
+
+      - name: Authenticate to Salesforce
         run: |
           echo "${{ secrets.SALESFORCE_JWT_SECRET_KEY }}" > server.key
-          sf org login jwt --username ${{ secrets.SALESFORCE_DEVHUB_USERNAME }} --jwt-key-file server.key --client-id ${{ secrets.SALESFORCE_CONSUMER_KEY }} --instance-url ${{ vars.INSTANCE_URL }} --set-default
-          sf project deploy start --source-dir changed-sources/force-app --test-level RunLocalTests
+          sf org login jwt \
+            --username ${{ secrets.SALESFORCE_DEVHUB_USERNAME }} \
+            --jwt-key-file server.key \
+            --client-id ${{ secrets.SALESFORCE_CONSUMER_KEY }} \
+            --instance-url ${{ vars.INSTANCE_URL }} \
+            --set-default
 
+      - name: Deploy metadata + Run specific tests
+        run: |
+          TESTS="${{ steps.extract-tests.outputs.tests }}"
+
+          if [[ -z "$TESTS" ]]; then
+            echo "[ERROR] No test classes found! Failing validation."
+            exit 1
+          fi
+
+          echo "[INFO] Running tests: $TESTS"
+
+          sf project deploy start \
+            --source-dir changed-sources/force-app \
+            --test-level RunSpecifiedTests \
+            --tests "$TESTS"
