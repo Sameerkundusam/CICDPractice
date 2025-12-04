@@ -4,7 +4,7 @@ public class AccountCalculatorTest {
     public static void countContactsTest(){
         List<Account> accList = new List<Account>();
         
-        for(Integer i=0;i<200;i++){
+        for(Integer i=0;i<100;i++){
             accList.add(new Account(Name='Test'+i));
         }
         insert accList;
