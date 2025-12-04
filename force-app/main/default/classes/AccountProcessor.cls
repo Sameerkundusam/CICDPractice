@@ -1,3 +1,4 @@
+// TEST_CLASS: AccountProcessorTest
 public class AccountProcessor
 {
   @future
